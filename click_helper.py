@@ -8,9 +8,21 @@ import pyautogui
 import ctypes
 from typing import List, Optional
 from pynput import keyboard
+import os
+import sys
 from models import ClickAction, SleepAction, LoopAction, serialize_actions, deserialize_actions
 from recorder import Recorder
 from player import Player
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 # Windows API Constants for Sleep Prevention
 ES_CONTINUOUS = 0x80000000
@@ -22,6 +34,13 @@ class ClickMasterApp:
         self.root = root
         self.root.title("Click 小幫手")
         self.root.geometry("1150x850")
+        
+        # Set window icon (supports bundled EXE)
+        try:
+            icon_path = resource_path("click_helper.ico")
+            self.root.iconbitmap(icon_path)
+        except Exception as e:
+            print(f"Could not load icon: {e}")
         
         self.actions: List = []
         self.recording = False
