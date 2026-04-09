@@ -4,8 +4,8 @@ import threading
 import time
 import copy
 import uuid
+import subprocess
 import pyautogui
-import ctypes
 from typing import List, Optional
 from pynput import keyboard
 import os
@@ -24,10 +24,13 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-# Windows API Constants for Sleep Prevention
-ES_CONTINUOUS = 0x80000000
-ES_SYSTEM_REQUIRED = 0x00000001
-ES_DISPLAY_REQUIRED = 0x00000002
+# Platform-specific font settings
+if sys.platform == 'darwin':
+    FONT_UI = "PingFang TC"
+    FONT_MONO = "Helvetica Neue"
+else:
+    FONT_UI = "Microsoft JhengHei"
+    FONT_MONO = "Segoe UI"
 
 class ClickMasterApp:
     def __init__(self, root):
@@ -44,6 +47,7 @@ class ClickMasterApp:
         
         self.actions: List = []
         self.recording = False
+        self._caffeinate_proc = None
         self.recorder = Recorder(self.add_action, self.stop_recording_ui)
         self.player = None
         
@@ -76,9 +80,9 @@ class ClickMasterApp:
         }
         self.style = ttk.Style()
         self.style.configure("Toolbar.TFrame", background=self.colors["toolbar"])
-        self.style.configure("TLabel", background=self.colors["toolbar"], font=("Microsoft JhengHei", 10))
-        self.style.configure("Group.TLabel", background=self.colors["toolbar"], font=("Microsoft JhengHei", 9, "bold"), foreground="#495057")
-        self.style.configure("TButton", font=("Microsoft JhengHei", 10))
+        self.style.configure("TLabel", background=self.colors["toolbar"], font=(FONT_UI, 10))
+        self.style.configure("Group.TLabel", background=self.colors["toolbar"], font=(FONT_UI, 9, "bold"), foreground="#495057")
+        self.style.configure("TButton", font=(FONT_UI, 10))
 
     def setup_ui(self):
         # Toolbar
@@ -125,8 +129,8 @@ class ClickMasterApp:
         self.footer = ttk.Frame(self.root, padding="2", style="Toolbar.TFrame")
         self.footer.pack(side=tk.BOTTOM, fill=tk.X)
         self.coord_var = tk.StringVar(value="螢幕座標 - X: 0, Y: 0")
-        ttk.Label(self.footer, textvariable=self.coord_var, font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=10)
-        ttk.Label(self.footer, text="by AlexW", font=("Segoe UI", 9, "italic"), foreground="#868e96").pack(side=tk.RIGHT, padx=10)
+        ttk.Label(self.footer, textvariable=self.coord_var, font=(FONT_MONO, 9)).pack(side=tk.LEFT, padx=10)
+        ttk.Label(self.footer, text="by AlexW", font=(FONT_MONO, 9, "italic"), foreground="#868e96").pack(side=tk.RIGHT, padx=10)
         
         # Bindings
         self.canvas.bind("<Button-1>", self.on_left_click)
@@ -149,6 +153,9 @@ class ClickMasterApp:
     def on_global_keypress(self, key):
         if key == keyboard.Key.f10:
             self.root.after(0, self.toggle_recording)
+        elif key == keyboard.Key.f11:
+            if self.player:
+                self.player.request_stop()
 
     def toggle_recording(self):
         if not self.recording:
@@ -211,21 +218,21 @@ class ClickMasterApp:
         tag = f"obj_{a.uid}"; x, y, w, h = a.ui_x, a.ui_y, a.ui_w, a.ui_h
         if a.comment:
             self.canvas.create_text(x+5, y+5, text=a.comment, anchor="nw", width=w-10,
-                                   font=("Microsoft JhengHei", 11, "bold"), fill=self.colors["comment"], tags=("node", tag))
+                                   font=(FONT_UI, 11, "bold"), fill=self.colors["comment"], tags=("node", tag))
             offset_y = 28
         else:
             offset_y = 5
         self.canvas.create_oval(x+w-6, y+h/2-6, x+w+6, y+h/2+6, fill=self.colors["port"], outline="#fff", tags=("node", tag, "port", "out_port"))
         if isinstance(a, ClickAction):
             header = f"{'左鍵' if a.button=='left' else '右鍵'}: {a.x}, {a.y}"
-            self.canvas.create_text(x+10, y+offset_y, text=header, anchor="nw", font=("Microsoft JhengHei", 10, "bold"), tags=("node", tag))
-            self.canvas.create_text(x+10, y+offset_y+22, text=f"點擊後等待: {a.delay}s", anchor="nw", font=("Microsoft JhengHei", 9), tags=("node", tag))
+            self.canvas.create_text(x+10, y+offset_y, text=header, anchor="nw", font=(FONT_UI, 10, "bold"), tags=("node", tag))
+            self.canvas.create_text(x+10, y+offset_y+22, text=f"點擊後等待: {a.delay}s", anchor="nw", font=(FONT_UI, 9), tags=("node", tag))
         elif isinstance(a, SleepAction):
-            self.canvas.create_text(x+10, y+offset_y, text="等待", anchor="nw", font=("Microsoft JhengHei", 10, "bold"), tags=("node", tag))
-            self.canvas.create_text(x+10, y+offset_y+22, text=f"秒數: {a.seconds}s", anchor="nw", font=("Microsoft JhengHei", 9), tags=("node", tag))
+            self.canvas.create_text(x+10, y+offset_y, text="等待", anchor="nw", font=(FONT_UI, 10, "bold"), tags=("node", tag))
+            self.canvas.create_text(x+10, y+offset_y+22, text=f"秒數: {a.seconds}s", anchor="nw", font=(FONT_UI, 9), tags=("node", tag))
         elif isinstance(a, LoopAction):
-            self.canvas.create_text(x+10, y+offset_y, text="迴圈", anchor="nw", font=("Microsoft JhengHei", 10, "bold"), tags=("node", tag))
-            self.canvas.create_text(x+10, y+offset_y+22, text=f"重複次數: {a.count}", anchor="nw", font=("Microsoft JhengHei", 9), tags=("node", tag))
+            self.canvas.create_text(x+10, y+offset_y, text="迴圈", anchor="nw", font=(FONT_UI, 10, "bold"), tags=("node", tag))
+            self.canvas.create_text(x+10, y+offset_y+22, text=f"重複次數: {a.count}", anchor="nw", font=(FONT_UI, 9), tags=("node", tag))
 
     def draw_connections(self):
         flat = self.get_flat_sequence(self.actions)
@@ -411,16 +418,30 @@ class ClickMasterApp:
         messagebox.showinfo("關於", "Click 小幫手 v1.0\n\n熱鍵:\n- F10: 錄製/停止錄製 (雙向切換)\n- F11: 播放中斷\n- Delete: 刪除物件\n\n作者: AlexW")
 
     def set_sleep_prevention(self, status: bool):
-        """控制 Windows 系統是否可以進入睡眠模式"""
-        try:
-            if status:
-                # ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED
-                ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED)
-            else:
-                # Restore default: ES_CONTINUOUS
-                ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS)
-        except Exception as e:
-            print(f"無法設定睡眠防護: {e}")
+        """控制系統是否可以進入睡眠模式 (支援 Windows / macOS)"""
+        if sys.platform == 'win32':
+            try:
+                import ctypes
+                ES_CONTINUOUS = 0x80000000
+                ES_SYSTEM_REQUIRED = 0x00000001
+                ES_DISPLAY_REQUIRED = 0x00000002
+                if status:
+                    ctypes.windll.kernel32.SetThreadExecutionState(
+                        ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED)
+                else:
+                    ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS)
+            except Exception as e:
+                print(f"無法設定睡眠防護: {e}")
+        elif sys.platform == 'darwin':
+            try:
+                if status:
+                    self._caffeinate_proc = subprocess.Popen(['caffeinate', '-di'])
+                else:
+                    if self._caffeinate_proc:
+                        self._caffeinate_proc.terminate()
+                        self._caffeinate_proc = None
+            except Exception as e:
+                print(f"無法設定睡眠防護: {e}")
 
     def on_close(self):
         """關閉程式時的處理"""

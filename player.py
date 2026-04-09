@@ -1,6 +1,5 @@
 import time
 import pyautogui
-from pynput import mouse, keyboard
 from models import ClickAction, SleepAction, LoopAction
 
 class Player:
@@ -8,27 +7,20 @@ class Player:
         self.actions = actions
         self.status_callback = status_callback
         self.stop_requested = False
-        self.kb_listener = None
+
+    def request_stop(self):
+        self.stop_requested = True
+        self.status_callback("使用者停止 (F11)")
 
     def play(self):
         self.stop_requested = False
-        self.kb_listener = keyboard.Listener(on_press=self.on_press)
-        self.kb_listener.start()
-        try:
-            if self.actions:
-                self.status_callback("準備執行 (2秒後開始)...")
-                time.sleep(2)
-                if self.stop_requested: return
-                
-                entry = self.find_entry_node(self.actions)
-                if entry: self.execute_flow(entry, self.actions)
-        finally:
-            self.kb_listener.stop()
+        if self.actions:
+            self.status_callback("準備執行 (2秒後開始)...")
+            time.sleep(2)
+            if self.stop_requested: return
 
-    def on_press(self, key):
-        if key == keyboard.Key.f11:
-            self.stop_requested = True
-            self.status_callback("使用者停止 (F11)")
+            entry = self.find_entry_node(self.actions)
+            if entry: self.execute_flow(entry, self.actions)
 
     def find_entry_node(self, nodes):
         if not nodes: return None
