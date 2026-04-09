@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.14+-blue.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
-![Windows](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)
+![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey.svg)
 
 阿就是個錄製滑鼠點擊動作的小幫手
 
@@ -12,7 +12,7 @@
 * 視覺化編輯器
 * 可程式化流程控制，可設置或新增等待時間與迴圈節點
 * 支援匯出/匯入為 JSON 格式，方便備份與管理。
-* 系統防鎖定: 執行期間自動防止 Windows 進入睡眠模式，確保自動化任務不中斷。
+* 系統防鎖定: 執行期間自動防止系統進入睡眠模式（Windows: SetThreadExecutionState / macOS: caffeinate），確保自動化任務不中斷。
 
 ## 🛠️ 安裝說明
 
@@ -21,7 +21,7 @@
 --- 以上麻瓜，以下宅宅 ---
 
 ## 使用原始碼跑的環境需求
-* Windows 10/11
+* Windows 10/11 或 macOS
 * Python 3.14 或以上版本
 * [uv](https://docs.astral.sh/uv/getting-started/installation/)
 
@@ -37,15 +37,27 @@
    uv sync
    ```
 
-3. **啟動程式**:
+3. **macOS 額外步驟**:
+   ```bash
+   brew install python-tk@3.14
+   ```
+   首次執行時需到 **系統設定 > 隱私權與安全性 > 輔助使用** 允許終端機的存取權限。
+
+4. **啟動程式**:
    ```bash
    uv run click_helper.py
    ```
 
-## 打包 exe
+## 打包
 
+Windows (exe):
 ```bash
 uv run pyinstaller --onefile --windowed --add-data "click_helper.ico;." --icon "click_helper.ico" click_helper.py
+```
+
+macOS (app):
+```bash
+uv run pyinstaller --onefile --windowed --add-data "click_helper.ico:." --icon "click_helper.ico" click_helper.py
 ```
 
 ## 使用方法
