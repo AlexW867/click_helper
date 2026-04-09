@@ -17,25 +17,25 @@
 ## 🛠️ 安裝說明
 
 ### 系統需求
-- Windows 10/11
-- Python 3.14 或以上版本
+* Windows 10/11
+* Python 3.14 或以上版本
+* uv
 
 ### 安裝步驟
 1. **複製儲存庫**:
    ```bash
-   git clone https://github.com/your-username/mrec.git
-   cd mrec
+   git clone https://github.com/AlexW867/click_helper
+   cd click_helper
    ```
 
 2. **安裝依賴套件**:
    ```bash
-   pip install -r requirements.txt
+   uv sync
    ```
-   *註：主要依賴包含 `pyautogui`, `pynput`, `tkinter`*
 
 3. **啟動程式**:
    ```bash
-   python app.py
+   uv run click_helper.py
    ```
 
 ## 使用方法
