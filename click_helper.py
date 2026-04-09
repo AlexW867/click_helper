@@ -415,7 +415,7 @@ class ClickMasterApp:
         if p:
             with open(p, 'w') as f: f.write(serialize_actions(self.actions))
     def show_about(self):
-        messagebox.showinfo("關於", "Click 小幫手 v1.0\n\n熱鍵:\n- F10: 錄製/停止錄製 (雙向切換)\n- F11: 播放中斷\n- Delete: 刪除物件\n\n作者: AlexW")
+        messagebox.showinfo("關於", "Click 小幫手 v1.1\n\n熱鍵:\n- F10: 錄製/停止錄製 (雙向切換)\n- F11: 播放中斷\n- Delete: 刪除物件\n\n作者: AlexW")
 
     def set_sleep_prevention(self, status: bool):
         """控制系統是否可以進入睡眠模式 (支援 Windows / macOS)"""
