@@ -45,7 +45,7 @@
 ## 打包 exe
 
 ```bash
-pyinstaller --noconsole --onefile --icon=click_helper.ico click_helper.py
+uv run pyinstaller --onefile --windowed --add-data "click_helper.ico;." --icon "click_helper.ico" click_helper.py
 ```
 
 ## 使用方法
